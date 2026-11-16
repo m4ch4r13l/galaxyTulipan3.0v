@@ -215,11 +215,11 @@ export default function App() {
   }, []);
 
   if (!isShareReady) {
-    return <div className="w-screen h-screen bg-[#0b0212]" />;
+    return <div className="w-full h-[100dvh] bg-[#0b0212]" />;
   }
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden select-none">
+    <div className="relative w-full h-[100dvh] overflow-hidden select-none">
       <GalaxyCanvas
         flowerType={config.flowerType}
         flowerCount={config.flowerCount}
@@ -233,7 +233,7 @@ export default function App() {
         onSelectTulip={handleSelectTulip}
       />
 
-      <div className="relative z-10 w-full h-full flex flex-col justify-between p-4 md:p-8 pointer-events-none">
+      <div className="fixed inset-0 z-10 w-full h-[100dvh] flex flex-col justify-between px-3 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] sm:p-5 md:p-8 pointer-events-none">
         <HeaderControls
           title={config.headerTitle}
           showSettingsButton={!isSharedView}

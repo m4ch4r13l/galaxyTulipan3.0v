@@ -13,9 +13,16 @@ export function HeaderControls({
 }: HeaderControlsProps) {
   return (
     <header className="w-full flex items-center justify-between gap-2 max-w-7xl mx-auto pt-1">
-      <div className="hidden sm:block w-10 md:w-28 shrink-0" aria-hidden="true" />
+      <div
+        className={
+          showSettingsButton
+            ? 'w-9 sm:w-10 md:w-28 shrink-0'
+            : 'hidden sm:block w-10 md:w-28 shrink-0'
+        }
+        aria-hidden="true"
+      />
 
-      <div className="flex items-center justify-center gap-3 md:gap-4 pointer-events-auto min-w-0">
+      <div className="flex items-center justify-center gap-3 md:gap-4 pointer-events-auto min-w-0 mx-auto">
         <span
           className="hidden md:block w-10 lg:w-16 h-px bg-gradient-to-r from-transparent to-pink-300/40"
           aria-hidden="true"
@@ -32,14 +39,18 @@ export function HeaderControls({
         />
       </div>
 
-      <div className="pointer-events-auto flex justify-end shrink-0 sm:w-10 md:w-28">
+      <div
+        className={`pointer-events-auto flex justify-end shrink-0 ${
+          showSettingsButton ? 'w-9 sm:w-10 md:w-28' : 'hidden sm:block sm:w-10 md:w-28'
+        }`}
+      >
         {showSettingsButton && (
           <button
             type="button"
             onClick={onOpenSettings}
             aria-label="Abrir configuración y personalización"
             title="Personalizar flores, fotos y mensajes"
-            className="glass-dock min-h-[38px] px-3 py-1.5 rounded-full text-xs font-medium text-pink-200/85 hover:text-white hover:border-pink-400/50 transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-400"
+            className="glass-dock min-h-[38px] px-2.5 md:px-3 py-1.5 rounded-full text-xs font-medium text-pink-200/85 hover:text-white hover:border-pink-400/50 transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-400"
           >
             <SlidersHorizontal className="w-3.5 h-3.5 text-pink-300 shrink-0" aria-hidden="true" />
             <span className="hidden md:inline">Configurar</span>

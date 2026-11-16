@@ -34,12 +34,12 @@ export function BottomDock({
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
-    <footer className="w-full flex flex-col items-center gap-2 max-w-4xl mx-auto">
+    <footer className="w-full flex flex-col items-center gap-1.5 sm:gap-2 max-w-4xl mx-auto">
       <button
         type="button"
         onClick={() => setIsCollapsed((prev) => !prev)}
         aria-expanded={!isCollapsed}
-        className="glass-dock pointer-events-auto px-3.5 py-1 rounded-full text-[11px] font-medium text-pink-200/80 hover:text-white transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+        className="glass-dock pointer-events-auto px-3 py-1 rounded-full text-[11px] font-medium text-pink-200/80 hover:text-white transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
       >
         {isCollapsed ? (
           <>
@@ -58,34 +58,40 @@ export function BottomDock({
         <>
           <nav
             aria-label="Controles de la galaxia"
-            className="glass-dock pointer-events-auto inline-flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-3xl sm:rounded-full"
+            className="glass-dock pointer-events-auto inline-flex flex-wrap items-center justify-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded-full max-w-full"
           >
             <button
               type="button"
               onClick={onToggleViewMode}
               aria-pressed={!isAutoRotating}
-              className={`min-h-[40px] px-3.5 md:px-4 py-2 rounded-full text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-400 ${
+              className={`min-h-[38px] sm:min-h-[40px] px-2.5 sm:px-3.5 md:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-400 ${
                 !isAutoRotating
                   ? 'bg-pink-500/20 text-pink-50 border border-pink-400/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]'
                   : 'bg-white/[0.04] text-pink-200/90 border border-white/5 hover:bg-white/10 hover:text-white'
               }`}
             >
               <Box className="w-3.5 h-3.5 text-pink-300 shrink-0" aria-hidden="true" />
-              <span>{isAutoRotating ? 'Vista Órbita' : 'Control Manual'}</span>
+              <span className="sm:hidden">{isAutoRotating ? 'Órbita' : 'Manual'}</span>
+              <span className="hidden sm:inline">
+                {isAutoRotating ? 'Vista Órbita' : 'Control Manual'}
+              </span>
             </button>
 
             <button
               type="button"
               onClick={onToggleAudio}
               aria-pressed={isAudioPlaying}
-              className={`min-h-[40px] px-3.5 md:px-4 py-2 rounded-full text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-400 ${
+              className={`min-h-[38px] sm:min-h-[40px] px-2.5 sm:px-3.5 md:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-400 ${
                 isAudioPlaying
                   ? 'bg-pink-500/20 text-pink-50 border border-pink-400/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]'
                   : 'bg-white/[0.04] text-pink-200/90 border border-white/5 hover:bg-white/10 hover:text-white'
               }`}
             >
               <Music className="w-3.5 h-3.5 text-pink-300 shrink-0" aria-hidden="true" />
-              <span>{isAudioPlaying ? 'Melodía Activa' : 'Melodía'}</span>
+              <span className="sm:hidden">{isAudioPlaying ? 'Sonando' : 'Melodía'}</span>
+              <span className="hidden sm:inline">
+                {isAudioPlaying ? 'Melodía Activa' : 'Melodía'}
+              </span>
             </button>
 
             <span
@@ -96,7 +102,7 @@ export function BottomDock({
             <button
               type="button"
               onClick={onOpenGallery}
-              className="min-h-[40px] px-4 md:px-5 py-2 rounded-full text-xs font-bold text-white bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 hover:brightness-110 active:scale-[0.98] transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_8px_22px_rgba(244,63,94,0.35)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-300"
+              className="min-h-[38px] sm:min-h-[40px] px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-bold text-white bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 hover:brightness-110 active:scale-[0.98] transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_8px_22px_rgba(244,63,94,0.35)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-300"
             >
               <Flower2 className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
               <span>{flowerPlural}</span>

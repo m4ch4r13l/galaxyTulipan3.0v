@@ -541,6 +541,7 @@ export function GalaxyCanvas({
     };
 
     window.addEventListener('resize', handleResize);
+    window.visualViewport?.addEventListener('resize', handleResize);
     domElem.addEventListener('mousedown', handleMouseDown);
     domElem.addEventListener('mousemove', handleMouseMove);
     domElem.addEventListener('mouseup', handleMouseUp);
@@ -788,6 +789,7 @@ export function GalaxyCanvas({
       window.clearTimeout(frameId);
 
       window.removeEventListener('resize', handleResize);
+      window.visualViewport?.removeEventListener('resize', handleResize);
       domElem.removeEventListener('mousedown', handleMouseDown);
       domElem.removeEventListener('mousemove', handleMouseMove);
       domElem.removeEventListener('mouseup', handleMouseUp);
@@ -832,7 +834,7 @@ export function GalaxyCanvas({
       <div
         ref={mountRef}
         id="webgl-container"
-        className="fixed inset-0 w-screen h-screen z-[1]"
+        className="fixed inset-0 w-full h-[100dvh] z-[1]"
         aria-label="Escena 3D de Galaxia de Tulipanes"
       />
       {webglUnavailable && (
