@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galaxia 3D de Tulipanes Multicolor</title>
+    <!-- Favicon de Tulipán en SVG -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M16 2C12 8 8 11 8 16c0 4.4 3.6 8 8 8s8-3.6 8-8c0-5-4-8-8-14z' fill='%23f43f5e'/><path d='M16 22v8M12 26h8' stroke='%234ade80' stroke-width='2' stroke-linecap='round'/></svg>">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Great+Vibes&family=Quicksand:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: #0b0212;
+            color: #fbcfe8;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            touch-action: none;
+        }
+        .title-font {
+            font-family: 'Cinzel', serif;
+        }
+        .script-font {
+            font-family: 'Great Vibes', cursive;
+        }
+        .glass-panel {
+            background: rgba(15, 3, 20, 0.75);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(244, 114, 182, 0.3);
+            box-shadow: 0 0 40px rgba(236, 72, 153, 0.2);
+        }
+        #webgl-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+        .ui-layer {
+            position: relative;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .interactive {
+            pointer-events: auto;
+        }
+        @keyframes pink-glow {
+            0%, 100% { text-shadow: 0 0 15px rgba(244, 114, 182, 0.8), 0 0 30px rgba(236, 72, 153, 0.6); }
+            50% { text-shadow: 0 0 25px rgba(251, 207, 232, 1), 0 0 45px rgba(244, 63, 94, 0.9); }
+        }
+        .glowing-pink {
+            animation: pink-glow 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="w-screen h-screen flex flex-col justify-between selection:bg-pink-500 selection:text-black">
+
+    <!-- Three.js 3D Canvas Container -->
+    <div id="webgl-container"></div>
+
+    <!-- UI Overlay Layer -->
+    <div class="ui-layer w-full h-full flex flex-col justify-between p-4 md:p-8 pointer-events-none">
+
+        <!-- Top Header -->
+        <header class="w-full flex justify-between items-center max-w-7xl mx-auto relative">
+            <div class="w-full md:w-auto flex justify-center md:justify-start">
+                <div class="flex items-center space-x-3 glass-panel px-4 py-2 rounded-full interactive">
+                    <i class="fa-solid fa-heart text-pink-400 text-lg animate-pulse"></i>
+                    <span class="title-font text-xs md:text-base font-bold tracking-wider bg-gradient-to-r from-pink-200 via-rose-300 to-pink-500 bg-clip-text text-transparent">Galaxia 3D de Tulipanes</span>
+                </div>
+            </div>
+
+            <!-- Botones flotantes pequeños a la izquierda en móvil, normales en PC -->
+            <div class="absolute top-16 left-4 md:relative md:top-auto md:left-auto flex flex-col md:flex-row items-start md:items-center gap-2">
+                <button id="view-mode-btn" class="glass-panel interactive px-3 py-1.5 md:px-4 md:py-2 rounded-full text-[11px] md:text-xs font-semibold text-pink-200 hover:text-white hover:border-pink-400 transition-all flex items-center space-x-1.5 shadow-lg">
+                    <i class="fa-solid fa-cube text-xs"></i>
+                    <span id="view-mode-text">Vista Órbita</span>
+                </button>
+                <button id="audio-toggle" class="glass-panel interactive px-3 py-1.5 md:px-4 md:py-2 rounded-full text-[11px] md:text-xs font-semibold text-pink-200 hover:text-white hover:border-pink-400 transition-all flex items-center space-x-1.5 shadow-lg">
+                    <i class="fa-solid fa-music text-xs"></i>
+                    <span id="audio-text">Melodía</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Center Floating Card / Intro Banner -->
+        <div class="flex justify-center items-center my-auto">
+            <div id="love-card" class="glass-panel rounded-3xl p-6 md:p-8 max-w-md w-full text-center interactive transition-all duration-1000 shadow-2xl opacity-0 transform scale-90 pointer-events-none">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-tr from-pink-500 to-rose-600 flex items-center justify-center shadow-lg shadow-pink-500/40 text-white">
+                    <i class="fa-solid fa-seedling text-2xl animate-bounce"></i>
+                </div>
+                <h1 class="title-font text-2xl md:text-3xl font-bold mb-2 glowing-pink text-pink-100">Galaxia de Tulipanes</h1>
+                <p class="script-font text-xl md:text-2xl text-pink-200 my-4 leading-relaxed">
+                    "Haz clic o toca cualquier tulipán flotante del universo 3D para descubrir su mensaje."
+                </p>
+                <div class="flex flex-wrap gap-2 justify-center mt-4">
+                    <button id="close-card-btn" class="px-6 py-3 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 text-white font-bold text-xs hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center space-x-2">
+                        <i class="fa-solid fa-heart"></i>
+                        <span>Entrar a la Galaxia</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Footer Controls / Hint -->
+        <footer class="w-full text-center max-w-4xl mx-auto">
+            <div class="glass-panel inline-block px-6 py-2 rounded-full text-xs text-pink-200/80 interactive">
+                <i class="fa-solid fa-hand-pointer mr-1 text-pink-400"></i> Toca un tulipán 3D • Arrastra para girar • Pellizca o usa rueda para zoom
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- Interactive Verse Modal (Popup con marco cuadrado perfectamente centrado) -->
+    <div id="verse-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
+        <div class="glass-panel rounded-3xl p-6 md:p-8 max-w-md w-full text-center relative transform scale-95 transition-all duration-300 border-pink-500/60 shadow-2xl shadow-pink-500/30 max-h-[90vh] overflow-y-auto">
+            <button id="close-modal" class="absolute top-4 right-4 text-pink-300 hover:text-white w-8 h-8 rounded-full bg-rose-950/60 flex items-center justify-center border border-pink-500/30 transition-all z-20">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            
+            <!-- Contenedor cuadrado estricto con recorte centrado automático para las imágenes -->
+            <div class="w-48 h-48 md:w-56 md:h-56 mx-auto mb-4 rounded-2xl overflow-hidden border border-pink-500/40 shadow-lg relative bg-black/40 flex items-center justify-center">
+                <img id="modal-img" src="" alt="Recuerdo Estelar" class="w-full h-full object-cover object-center">
+            </div>
+
+            <h3 id="modal-title" class="title-font text-lg md:text-xl font-bold text-pink-100 mb-2">Tulipán Estelar</h3>
+            <p id="modal-verse" class="script-font text-xl md:text-2xl text-pink-200 my-4 leading-relaxed whitespace-pre-line">
+                "Verso de amor..."
+            </p>
+            <div class="text-xs text-pink-300/80 tracking-widest uppercase title-font">Para la estrella de mi vida</div>
+        </div>
+    </div>
+
+    <!-- Three.js 3D Galaxy Simulation Script -->
+    <script>
+        // --- THREE.JS 3D ENVIRONMENT SETUP ---
+        const container = document.getElementById('webgl-container');
+        
+        let scene, camera, renderer;
+        let galaxyParticles, backgroundStars, distantGalaxies, nebulaClouds, coreParticleCloud, tulipClusters = [], burstParticles = [], shootingStars = [];
+        let isAutoRotating = true;
+        
+        let cameraRadius = 2200;
+        let targetCameraRadius = 260;
+        let isIntroZooming = true;
+
+        let targetRotationX = 0.3;
+        let targetRotationY = 0;
+        let currentRotationX = 0.3;
+        let currentRotationY = 0;
+
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        let initialPinchDistance = null;
+
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        const tulipDataList = [
+            {
+                verse: `\"Una conexion \ncomo la nuestra.\nEstará.\Hasta cuando nosotros\ndejemos de estar...\"`,
+                image: "img1.jpeg"
+            },
+            {
+                verse: `\"¿Cómo no amarte vida mía?\nSi eres un sueño,\nen un mundo de pesadillas.\"`,
+                image: "img2.jpeg"
+            },
+            {
+                verse: `\"La vida es bella\nPero tu...\nMi vida...\nEres mas bella\nQue la vida en sí misma.\"`,
+                image: "img3.jpeg"
+            },
+            {
+                verse: `\"Si Dios existe, seguro es poeta,\nY te escribió a ti,\nCon perfección y amor en cada\nuna de tus letras...\"`,
+                image: "img4.jpeg"
+            },
+            {
+                verse: `\"Eres mía,\nPorque ni tan tuya has sido,\nComo ya has sido mía.\nY no eras mia como pertenencia,\nComo un objeto.\nEres mía como vinculo perpetuo.\"`,
+                image: "img5.jpeg"
+            },
+            {
+                verse: `\"Bendito sea Dios, su física\ny su perfecta cencia.\nBendita sea cada coincidencia,\nque permitio tu bendita existencia...\"`,
+                image: "img6.jpeg"
+            },
+            {
+                verse: `\"Se que no será fácil pero\nquiero que sigamos siendo\ntu y yo por mucho tiempo\nmás, quiero estar contigo\ntoda mi vida.\"`,
+                image: "img7.jpeg"
+            }
+        ];
+
+        function init3D() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0b0212);
+            scene.fog = new THREE.FogExp2(0x0b0212, 0.0014);
+
+            camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 3000);
+            updateCameraPosition();
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffd1dc, 1.4);
+            scene.add(ambientLight);
+
+            const corePointLight = new THREE.PointLight(0xffb6c1, 5.0, 700);
+            corePointLight.position.set(0, 0, 0);
+            scene.add(corePointLight);
+
+            createBackgroundStars();
+            createDistantGalaxies();
+            createNebulaDust();
+            createDiffuseGalaxyCore();
+            createMultiArmGalaxy();
+            create3DTulipClusters();
+
+            window.addEventListener('resize', onWindowResize);
+            
+            const domElem = renderer.domElement;
+            domElem.addEventListener('mousedown', onPointerDown);
+            domElem.addEventListener('mousemove', onPointerMove);
+            domElem.addEventListener('mouseup', onPointerUp);
+            domElem.addEventListener('mouseleave', onPointerUp);
+
+            domElem.addEventListener('touchstart', onTouchStart, { passive: false });
+            domElem.addEventListener('touchmove', onTouchMove, { passive: false });
+            domElem.addEventListener('touchend', onTouchEnd);
+
+            domElem.addEventListener('wheel', onWheelScroll, { passive: false });
+            domElem.addEventListener('click', onCanvasClick);
+
+            animate3D();
+        }
+
+        function updateCameraPosition() {
+            camera.position.x = Math.sin(currentRotationY) * Math.cos(currentRotationX) * cameraRadius;
+            camera.position.y = Math.sin(currentRotationX) * cameraRadius + 50;
+            camera.position.z = Math.cos(currentRotationY) * Math.cos(currentRotationX) * cameraRadius;
+            camera.lookAt(scene.position);
+        }
+
+        function getParticleTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+
+            const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            gradient.addColorStop(0.25, 'rgba(255, 182, 193, 0.85)');
+            gradient.addColorStop(0.6, 'rgba(244, 63, 94, 0.25)');
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 128, 128);
+
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createBackgroundStars() {
+            const starCount = 8000;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(starCount * 3);
+            const colors = new Float32Array(starCount * 3);
+
+            const colorOptions = [
+                new THREE.Color('#ffffff'),
+                new THREE.Color('#fbcfe8'),
+                new THREE.Color('#fed7aa'),
+                new THREE.Color('#c084fc'),
+                new THREE.Color('#93c5fd'),
+                new THREE.Color('#f43f5e')
+            ];
+
+            for (let i = 0; i < starCount; i++) {
+                const i3 = i * 3;
+                const u = Math.random();
+                const v = Math.random();
+                const theta = u * 2.0 * Math.PI;
+                const phi = Math.acos(2.0 * v - 1.0);
+                const r = 280 + Math.random() * 370;
+
+                positions[i3] = r * Math.sin(phi) * Math.cos(theta);
+                positions[i3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+                positions[i3 + 2] = r * Math.cos(phi);
+
+                const c = colorOptions[Math.floor(Math.random() * colorOptions.length)];
+                colors[i3] = c.r;
+                colors[i3 + 1] = c.g;
+                colors[i3 + 2] = c.b;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            backgroundStars = new THREE.Points(geometry, new THREE.PointsMaterial({
+                size: 2.5,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.95,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            }));
+            scene.add(backgroundStars);
+        }
+
+        function createDistantGalaxies() {
+            const galCount = 250;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(galCount * 3);
+            const colors = new Float32Array(galCount * 3);
+
+            const galColors = [
+                new THREE.Color('#ec4899'),
+                new THREE.Color('#8b5cf6'),
+                new THREE.Color('#38bdf8'),
+                new THREE.Color('#f43f5e'),
+                new THREE.Color('#fb7185')
+            ];
+
+            for (let i = 0; i < galCount; i++) {
+                const i3 = i * 3;
+                const u = Math.random();
+                const v = Math.random();
+                const theta = u * 2.0 * Math.PI;
+                const phi = Math.acos(2.0 * v - 1.0);
+                const r = 250 + Math.random() * 300;
+
+                positions[i3] = r * Math.sin(phi) * Math.cos(theta);
+                positions[i3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+                positions[i3 + 2] = r * Math.cos(phi);
+
+                const c = galColors[Math.floor(Math.random() * galColors.length)];
+                colors[i3] = c.r;
+                colors[i3 + 1] = c.g;
+                colors[i3 + 2] = c.b;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            distantGalaxies = new THREE.Points(geometry, new THREE.PointsMaterial({
+                size: 18.0,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.6,
+                map: getParticleTexture(),
+                alphaTest: 0.001,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            }));
+            scene.add(distantGalaxies);
+        }
+
+        function createDiffuseGalaxyCore() {
+            const coreParticlesCount = 3500;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(coreParticlesCount * 3);
+            const colors = new Float32Array(coreParticlesCount * 3);
+
+            const centerWhite = new THREE.Color('#ffffff');
+            const corePink = new THREE.Color('#ff7597');
+            const outerRose = new THREE.Color('#a21caf');
+
+            for (let i = 0; i < coreParticlesCount; i++) {
+                const i3 = i * 3;
+                const u = Math.random();
+                const v = Math.random();
+                const theta = u * 2.0 * Math.PI;
+                const phi = Math.acos(2.0 * v - 1.0);
+                const r = Math.pow(Math.random(), 2.5) * 65;
+
+                positions[i3] = r * Math.sin(phi) * Math.cos(theta);
+                positions[i3 + 1] = (r * Math.sin(phi) * Math.sin(theta)) * 0.35;
+                positions[i3 + 2] = r * Math.cos(phi);
+
+                const mixedColor = centerWhite.clone();
+                const normDist = r / 65;
+                if (normDist < 0.3) {
+                    mixedColor.lerp(corePink, normDist / 0.3);
+                } else {
+                    mixedColor.lerp(outerRose, (normDist - 0.3) / 0.7);
+                }
+
+                colors[i3] = mixedColor.r;
+                colors[i3 + 1] = mixedColor.g;
+                colors[i3 + 2] = mixedColor.b;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            coreParticleCloud = new THREE.Points(geometry, new THREE.PointsMaterial({
+                size: 14.0,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.65,
+                map: getParticleTexture(),
+                alphaTest: 0.001,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            }));
+            scene.add(coreParticleCloud);
+        }
+
+        function createNebulaDust() {
+            const cloudCount = 1200;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(cloudCount * 3);
+            const colors = new Float32Array(cloudCount * 3);
+
+            const cloudColor1 = new THREE.Color('#f43f5e');
+            const cloudColor2 = new THREE.Color('#a855f7');
+            const cloudColor3 = new THREE.Color('#ec4899');
+
+            const arms = 6;
+            const radius = 340;
+
+            for (let i = 0; i < cloudCount; i++) {
+                const i3 = i * 3;
+                const r = Math.random() * radius;
+                const spinAngle = r * 0.0035;
+                const branchAngle = ((i % arms) * 2 * Math.PI) / arms;
+
+                const offsetX = (Math.random() - 0.5) * 80;
+                const offsetY = (Math.random() - 0.5) * 25;
+                const offsetZ = (Math.random() - 0.5) * 80;
+
+                positions[i3] = Math.cos(branchAngle + spinAngle) * r + offsetX;
+                positions[i3 + 1] = offsetY;
+                positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * r + offsetZ;
+
+                const mixColor = cloudColor1.clone();
+                if (i % 3 === 0) mixColor.lerp(cloudColor2, Math.random());
+                else if (i % 3 === 1) mixColor.lerp(cloudColor3, Math.random());
+
+                colors[i3] = mixColor.r;
+                colors[i3 + 1] = mixColor.g;
+                colors[i3 + 2] = mixColor.b;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            nebulaClouds = new THREE.Points(geometry, new THREE.PointsMaterial({
+                size: 22.0,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.18,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            }));
+            scene.add(nebulaClouds);
+        }
+
+        function createMultiArmGalaxy() {
+            const particleCount = 22000;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+
+            const colorInside = new THREE.Color('#fff1f2');
+            const colorMiddle = new THREE.Color('#ec4899');
+            const colorOutside = new THREE.Color('#831843');
+
+            const arms = 6;
+            const radius = 380;
+
+            for (let i = 0; i < particleCount; i++) {
+                const i3 = i * 3;
+
+                const r = Math.random() * radius;
+                const spinAngle = r * 0.0035;
+                const branchAngle = ((i % arms) * 2 * Math.PI) / arms;
+
+                const randomX = Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 55;
+                const randomY = Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 40;
+                const randomZ = Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 55;
+
+                positions[i3] = Math.cos(branchAngle + spinAngle) * r + randomX;
+                positions[i3 + 1] = randomY;
+                positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * r + randomZ;
+
+                const mixedColor = colorInside.clone();
+                if (r < radius * 0.25) {
+                    mixedColor.lerp(colorInside, r / (radius * 0.25));
+                } else if (r < radius * 0.65) {
+                    mixedColor.lerp(colorMiddle, (r - radius * 0.25) / (radius * 0.4));
+                } else {
+                    mixedColor.lerp(colorOutside, (r - radius * 0.65) / (radius * 0.35));
+                }
+
+                colors[i3] = mixedColor.r;
+                colors[i3 + 1] = mixedColor.g;
+                colors[i3 + 2] = mixedColor.b;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            galaxyParticles = new THREE.Points(geometry, new THREE.PointsMaterial({
+                size: 2.0,
+                vertexColors: true,
+                blending: THREE.AdditiveBlending,
+                transparent: true,
+                opacity: 0.9,
+                depthWrite: false
+            }));
+            scene.add(galaxyParticles);
+        }
+
+        function createSingleTulipMesh() {
+            const tulipGroup = new THREE.Group();
+
+            const stemMat = new THREE.MeshBasicMaterial({ color: 0x4ade80 });
+            const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 15, 6), stemMat);
+            stem.position.y = -7.5;
+            tulipGroup.add(stem);
+
+            const leafMat = new THREE.MeshBasicMaterial({ color: 0x22c55e });
+            const leafGeo = new THREE.ConeGeometry(1.4, 5.5, 4);
+            
+            const leaf1 = new THREE.Mesh(leafGeo, leafMat);
+            leaf1.position.set(1.1, -5.5, 0);
+            leaf1.rotation.z = -Math.PI / 4;
+            tulipGroup.add(leaf1);
+
+            const leaf2 = new THREE.Mesh(leafGeo, leafMat);
+            leaf2.position.set(-1.1, -6.2, 0);
+            leaf2.rotation.z = Math.PI / 4;
+            tulipGroup.add(leaf2);
+
+            const colorPalette = [
+                { main: 0xf43f5e, emissive: 0xdb2777, petal: 0xfb7185, petalEmissive: 0xe11d48 },
+                { main: 0xd946ef, emissive: 0xc026d3, petal: 0xe879f9, petalEmissive: 0xa855f7 },
+                { main: 0xef4444, emissive: 0xdc2626, petal: 0xf87171, petalEmissive: 0xb91c1c },
+                { main: 0xfbbf24, emissive: 0xf59e0b, petal: 0xfde047, petalEmissive: 0xd97706 },
+                { main: 0x38bdf8, emissive: 0x0284c7, petal: 0x7dd3fc, petalEmissive: 0x0369a1 },
+                { main: 0xffffff, emissive: 0xe2e8f0, petal: 0xfff1f2, petalEmissive: 0xcfd2d8 }
+            ];
+
+            const selectedColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+
+            const cup = new THREE.Mesh(
+                new THREE.CylinderGeometry(1.4, 2.5, 5.5, 8),
+                new THREE.MeshStandardMaterial({
+                    color: selectedColor.main,
+                    emissive: selectedColor.emissive,
+                    emissiveIntensity: 0.5,
+                    roughness: 0.3,
+                    metalness: 0.1
+                })
+            );
+            cup.position.y = 0.5;
+            tulipGroup.add(cup);
+
+            const petalGeo = new THREE.SphereGeometry(1.8, 8, 8, 0, Math.PI * 2, 0, Math.PI * 0.7);
+            const petalMat = new THREE.MeshStandardMaterial({
+                color: selectedColor.petal,
+                emissive: selectedColor.petalEmissive,
+                emissiveIntensity: 0.4,
+                roughness: 0.25,
+                side: THREE.DoubleSide
+            });
+
+            for (let p = 0; p < 4; p++) {
+                const angle = (p * Math.PI / 2);
+                const petal = new THREE.Mesh(petalGeo, petalMat);
+                petal.scale.set(0.7, 1.6, 0.7);
+                petal.position.set(Math.cos(angle) * 1.0, 2.0, Math.sin(angle) * 1.0);
+                petal.rotation.y = angle;
+                petal.rotation.x = 0.2;
+                tulipGroup.add(petal);
+            }
+
+            const core = new THREE.Mesh(new THREE.SphereGeometry(0.9, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
+            core.position.y = 1.3;
+            tulipGroup.add(core);
+
+            tulipGroup.userData.baseColor = selectedColor.main;
+            return tulipGroup;
+        }
+
+        function create3DTulipClusters() {
+            const clusterCount = 47;
+            for (let i = 0; i < clusterCount; i++) {
+                const tulipMesh = createSingleTulipMesh();
+                const theta = Math.random() * Math.PI * 2;
+                const r = 90 + Math.random() * 240;
+
+                tulipMesh.position.x = Math.cos(theta) * r;
+                tulipMesh.position.y = (Math.random() - 0.5) * 60;
+                tulipMesh.position.z = Math.sin(theta) * r;
+
+                const scale = Math.random() * 0.7 + 1.0;
+                tulipMesh.scale.set(scale, scale, scale);
+
+                const dataIndex = i % tulipDataList.length;
+                tulipMesh.userData.id = i;
+                tulipMesh.userData.verse = tulipDataList[dataIndex].verse;
+                tulipMesh.userData.image = tulipDataList[dataIndex].image;
+                tulipMesh.userData.originalY = tulipMesh.position.y;
+                tulipMesh.userData.rotSpeed = (Math.random() - 0.5) * 0.015;
+
+                scene.add(tulipMesh);
+                tulipClusters.push(tulipMesh);
+            }
+        }
+
+        function triggerTulipSupernova(x, y, z, customColor = 0xf43f5e) {
+            const count = 75;
+            const velocities = [];
+
+            for (let i = 0; i < count; i++) {
+                const speed = Math.random() * 4.5 + 2;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos((Math.random() * 2) - 1);
+                
+                velocities.push(new THREE.Vector3(
+                    speed * Math.sin(phi) * Math.cos(theta),
+                    speed * Math.sin(phi) * Math.sin(theta),
+                    speed * Math.cos(phi)
+                ));
+            }
+
+            for (let i = 0; i < count; i++) {
+                const particle = new THREE.Mesh(
+                    new THREE.SphereGeometry(1.2, 6, 6),
+                    new THREE.MeshBasicMaterial({
+                        color: Math.random() > 0.3 ? customColor : 0xffffff,
+                        transparent: true,
+                        opacity: 1,
+                        blending: THREE.AdditiveBlending
+                    })
+                );
+                particle.position.set(x, y, z);
+                particle.userData = {
+                    velocity: velocities[i],
+                    life: 1.0,
+                    decay: Math.random() * 0.02 + 0.015,
+                    rotSpeed: { x: (Math.random() - 0.5) * 0.1, y: (Math.random() - 0.5) * 0.1 }
+                };
+                scene.add(particle);
+                burstParticles.push(particle);
+            }
+        }
+
+        function spawnShootingStar() {
+            const startPos = new THREE.Vector3((Math.random() - 0.5) * 220, 100 + Math.random() * 80, (Math.random() - 0.5) * 220);
+            const direction = new THREE.Vector3((Math.random() - 0.5) * 8, -Math.random() * 6 - 4, (Math.random() - 0.5) * 8).normalize();
+
+            const points = [];
+            for (let j = 0; j < 25; j++) {
+                points.push(startPos.clone().sub(direction.clone().multiplyScalar(j * 1.5)));
+            }
+
+            const shootingStar = new THREE.Line(
+                new THREE.BufferGeometry().setFromPoints(points),
+                new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1.0, blending: THREE.AdditiveBlending })
+            );
+            shootingStar.userData = { direction: direction.multiplyScalar(6.0), life: 1.0, decay: Math.random() * 0.02 + 0.015 };
+
+            scene.add(shootingStar);
+            shootingStars.push(shootingStar);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function onPointerDown(event) {
+            if (isIntroZooming) return;
+            if (event.target.closest('.interactive') || event.target.closest('#verse-modal')) return;
+            isDragging = true;
+            isAutoRotating = false;
+            document.getElementById('view-mode-text').textContent = "Control Manual";
+            document.getElementById('view-mode-btn').classList.add('border-pink-400');
+            previousMousePosition = { x: event.clientX, y: event.clientY };
+        }
+
+        function onPointerMove(event) {
+            if (isIntroZooming || !isDragging) return;
+            const deltaX = event.clientX - previousMousePosition.x;
+            const deltaY = event.clientY - previousMousePosition.y;
+
+            targetRotationY -= deltaX * 0.005;
+            targetRotationX += deltaY * 0.005;
+            targetRotationX = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, targetRotationX));
+
+            previousMousePosition = { x: event.clientX, y: event.clientY };
+        }
+
+        function onPointerUp() { isDragging = false; }
+
+        function onTouchStart(event) {
+            if (isIntroZooming) return;
+            if (event.target.closest('.interactive') || event.target.closest('#verse-modal')) return;
+            
+            if (event.touches.length === 1) {
+                isDragging = true;
+                isAutoRotating = false;
+                document.getElementById('view-mode-text').textContent = "Control Manual";
+                document.getElementById('view-mode-btn').classList.add('border-pink-400');
+                previousMousePosition = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+            } else if (event.touches.length === 2) {
+                isDragging = false;
+                initialPinchDistance = Math.hypot(event.touches[0].clientX - event.touches[1].clientX, event.touches[0].clientY - event.touches[1].clientY);
+            }
+        }
+
+        function onTouchMove(event) {
+            if (isIntroZooming) return;
+            if (event.target.closest('.interactive') || event.target.closest('#verse-modal')) return;
+
+            if (isDragging && event.touches.length === 1) {
+                targetRotationY -= (event.touches[0].clientX - previousMousePosition.x) * 0.005;
+                targetRotationX += (event.touches[0].clientY - previousMousePosition.y) * 0.005;
+                targetRotationX = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, targetRotationX));
+                previousMousePosition = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+                event.preventDefault();
+            } else if (event.touches.length === 2 && initialPinchDistance !== null) {
+                const currentDist = Math.hypot(event.touches[0].clientX - event.touches[1].clientX, event.touches[0].clientY - event.touches[1].clientY);
+                targetCameraRadius = Math.max(90, Math.min(1200, targetCameraRadius * (1 + ((initialPinchDistance / currentDist) - 1) * 0.2)));
+                initialPinchDistance = currentDist;
+                event.preventDefault();
+            }
+        }
+
+        function onTouchEnd(event) {
+            if (event.touches.length < 2) initialPinchDistance = null;
+            if (event.touches.length === 0) isDragging = false;
+        }
+
+        function onWheelScroll(event) {
+            if (isIntroZooming) return;
+            event.preventDefault();
+            targetCameraRadius = Math.max(90, Math.min(1200, targetCameraRadius + event.deltaY * 0.3));
+        }
+
+        function onCanvasClick(event) {
+            if (isIntroZooming) return;
+            if (event.target.closest('.interactive') || event.target.closest('#verse-modal')) return;
+
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(tulipClusters, true);
+
+            if (intersects.length > 0) {
+                let obj = intersects[0].object;
+                while (obj && !obj.userData?.verse && obj.parent) obj = obj.parent;
+
+                if (obj && obj.userData?.verse) {
+                    openVerseModal(obj.userData.verse, obj.userData.image);
+                    triggerTulipSupernova(obj.position.x, obj.position.y, obj.position.z, obj.userData.baseColor || 0xf43f5e);
+                }
+            }
+        }
+
+        const verseModal = document.getElementById('verse-modal');
+        const modalVerse = document.getElementById('modal-verse');
+        const modalImg = document.getElementById('modal-img');
+        const closeModalBtn = document.getElementById('close-modal');
+
+        function openVerseModal(verseText, imageSrc) {
+            modalVerse.textContent = verseText;
+            modalImg.src = imageSrc;
+            verseModal.classList.remove('opacity-0', 'pointer-events-none');
+            verseModal.querySelector('.glass-panel').classList.remove('scale-95');
+            verseModal.querySelector('.glass-panel').classList.add('scale-100');
+        }
+
+        function closeVerseModal() {
+            verseModal.classList.add('opacity-0', 'pointer-events-none');
+            verseModal.querySelector('.glass-panel').classList.remove('scale-100');
+            verseModal.querySelector('.glass-panel').classList.add('scale-95');
+        }
+
+        closeModalBtn.addEventListener('click', closeVerseModal);
+        verseModal.addEventListener('click', (e) => { if (e.target === verseModal) closeVerseModal(); });
+
+        let clock = new THREE.Clock();
+        let lastShootingStarTime = 0;
+
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+            const elapsedTime = clock.getElapsedTime();
+
+            if (isIntroZooming) {
+                cameraRadius += (targetCameraRadius - cameraRadius) * 0.035;
+                if (Math.abs(cameraRadius - targetCameraRadius) < 1.5) {
+                    cameraRadius = targetCameraRadius;
+                    isIntroZooming = false;
+                    const loveCard = document.getElementById('love-card');
+                    if (loveCard) {
+                        loveCard.classList.remove('opacity-0', 'scale-90', 'pointer-events-none');
+                        loveCard.classList.add('opacity-100', 'scale-100');
+                    }
+                }
+            }
+
+            if (elapsedTime - lastShootingStarTime > (1.8 + Math.random() * 2.0)) {
+                spawnShootingStar();
+                lastShootingStarTime = elapsedTime;
+            }
+
+            if (galaxyParticles) galaxyParticles.rotation.y = elapsedTime * 0.04;
+            if (nebulaClouds) nebulaClouds.rotation.y = elapsedTime * 0.025;
+            if (backgroundStars) backgroundStars.rotation.y = elapsedTime * 0.005;
+            if (distantGalaxies) distantGalaxies.rotation.y = elapsedTime * 0.002;
+
+            if (coreParticleCloud) {
+                coreParticleCloud.rotation.y = elapsedTime * 0.03;
+                const pulse = 1 + Math.sin(elapsedTime * 2.5) * 0.06;
+                coreParticleCloud.scale.set(pulse, pulse, pulse);
+            }
+
+            tulipClusters.forEach(tulip => {
+                tulip.rotation.y += tulip.userData.rotSpeed;
+                tulip.position.y = tulip.userData.originalY + Math.sin(elapsedTime * 2 + tulip.position.x) * 4;
+            });
+
+            for (let i = burstParticles.length - 1; i >= 0; i--) {
+                const p = burstParticles[i];
+                p.position.add(p.userData.velocity);
+                p.rotation.x += p.userData.rotSpeed.x;
+                p.rotation.y += p.userData.rotSpeed.y;
+                p.userData.life -= p.userData.decay;
+                p.material.opacity = p.userData.life;
+                if (p.userData.life <= 0) {
+                    scene.remove(p);
+                    p.geometry.dispose();
+                    p.material.dispose();
+                    burstParticles.splice(i, 1);
+                }
+            }
+
+            for (let i = shootingStars.length - 1; i >= 0; i--) {
+                const s = shootingStars[i];
+                s.position.add(s.userData.direction);
+                s.userData.life -= s.userData.decay;
+                s.material.opacity = s.userData.life;
+                if (s.userData.life <= 0) {
+                    scene.remove(s);
+                    s.geometry.dispose();
+                    s.material.dispose();
+                    shootingStars.splice(i, 1);
+                }
+            }
+
+            if (!isIntroZooming && isAutoRotating) {
+                targetRotationY = elapsedTime * 0.04;
+                targetRotationX = Math.sin(elapsedTime * 0.2) * 0.15 + 0.3;
+            }
+
+            currentRotationY += (targetRotationY - currentRotationY) * 0.08;
+            currentRotationX += (targetRotationX - currentRotationX) * 0.08;
+            if (!isIntroZooming) cameraRadius += (targetCameraRadius - cameraRadius) * 0.08;
+
+            updateCameraPosition();
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            init3D();
+
+            const closeCardBtn = document.getElementById('close-card-btn');
+            const loveCard = document.getElementById('love-card');
+
+            closeCardBtn.addEventListener('click', () => {
+                if (loveCard) {
+                    loveCard.style.opacity = '0';
+                    loveCard.style.transform = 'scale(0.95)';
+                    loveCard.style.pointerEvents = 'none';
+                    setTimeout(() => { loveCard.style.display = 'none'; }, 500);
+                }
+            });
+
+            const viewModeBtn = document.getElementById('view-mode-btn');
+            const viewModeText = document.getElementById('view-mode-text');
+
+            viewModeBtn.addEventListener('click', () => {
+                isAutoRotating = !isAutoRotating;
+                if (isAutoRotating) {
+                    viewModeText.textContent = "Vista Órbita";
+                    viewModeBtn.classList.remove('border-pink-400');
+                } else {
+                    viewModeText.textContent = "Control Manual";
+                    viewModeBtn.classList.add('border-pink-400');
+                }
+            });
+        });
+
+        const audioToggle = document.getElementById('audio-toggle');
+        const audioText = document.getElementById('audio-text');
+        let isAudioPlaying = false;
+        let audioContext = null;
+
+        function playAmbientChime() {
+            if (!isAudioPlaying) return;
+            try {
+                if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const notes = [329.63, 392.00, 440.00, 523.25, 659.25, 783.99];
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(notes[Math.floor(Math.random() * notes.length)], audioContext.currentTime);
+                gain.gain.setValueAtTime(0.05, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 4.0);
+
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                osc.start();
+                osc.stop(audioContext.currentTime + 4.0);
+            } catch(e) {}
+
+            if (isAudioPlaying) setTimeout(playAmbientChime, 2500 + Math.random() * 1500);
+        }
+
+        audioToggle.addEventListener('click', () => {
+            isAudioPlaying = !isAudioPlaying;
+            if (isAudioPlaying) {
+                audioText.textContent = "Melodía Activa";
+                audioToggle.classList.add('border-pink-400', 'bg-pink-950/40');
+                playAmbientChime();
+            } else {
+                audioText.textContent = "Melodía";
+                audioToggle.classList.remove('border-pink-400', 'bg-pink-950/40');
+            }
+        });
+    </script>
+</body>
+</html>
