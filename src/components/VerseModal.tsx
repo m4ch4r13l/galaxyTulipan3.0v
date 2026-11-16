@@ -6,6 +6,8 @@ interface VerseModalProps {
   memories: TulipMemory[];
   activeIndex: number | null;
   discoveredIds: number[];
+  flowerSingular: string;
+  dedicationFooter: string;
   onSelectIndex: (index: number) => void;
   onClose: () => void;
 }
@@ -14,6 +16,8 @@ export function VerseModal({
   memories,
   activeIndex,
   discoveredIds,
+  flowerSingular,
+  dedicationFooter,
   onSelectIndex,
   onClose,
 }: VerseModalProps) {
@@ -88,7 +92,7 @@ export function VerseModal({
             else handleNext();
           }
         }}
-        className={`glass-panel rounded-[28px] p-6 sm:p-8 max-w-md w-full text-center relative overflow-hidden transform transition-all duration-300 max-h-[92vh] overflow-y-auto ${
+        className={`glass-panel rounded-[28px] p-6 sm:p-8 max-w-md w-full text-center relative overflow-hidden transform transition-all duration-300 max-h-[92vh] overflow-y-auto touch-pan-y ${
           isOpen ? 'scale-100' : 'scale-95'
         }`}
       >
@@ -103,7 +107,7 @@ export function VerseModal({
           <div className="flex items-center gap-2 text-[11px] text-pink-200/80 title-font tracking-[0.2em] uppercase tabular-nums">
             <Flower2 className="w-3.5 h-3.5 text-rose-400 shrink-0" aria-hidden="true" />
             <span>
-              Tulipán {formattedCurrent} · {formattedTotal}
+              {flowerSingular} {formattedCurrent} · {formattedTotal}
             </span>
           </div>
 
@@ -152,9 +156,9 @@ export function VerseModal({
 
         {/* Tira de miniaturas centrada (dorado tenue = sin explorar, rosa = explorado) */}
         <div
-          className="relative flex items-center justify-center gap-2 mb-5"
+          className="relative flex items-center justify-start sm:justify-center gap-2 mb-5 overflow-x-auto py-1 px-1"
           role="tablist"
-          aria-label="Galería de tulipanes"
+          aria-label="Galería de recuerdos"
         >
           {memories.map((item, idx) => {
             const isActive = idx === safeIndex;
@@ -198,16 +202,18 @@ export function VerseModal({
             id="modal-title"
             className="title-font text-sm sm:text-base font-semibold tracking-[0.14em] uppercase bg-gradient-to-r from-pink-100 via-rose-200 to-pink-300 bg-clip-text text-transparent mb-2"
           >
-            {memory?.title ?? 'Tulipán Estelar'}
+            {memory?.title ?? 'Recuerdo Estelar'}
           </h3>
 
           <p className="script-font text-[26px] sm:text-[30px] text-pink-50 my-2.5 leading-[1.45] whitespace-pre-line drop-shadow-[0_2px_12px_rgba(244,114,182,0.22)]">
             {memory?.verse ?? ''}
           </p>
 
-          <p className="title-font text-[10px] tracking-[0.24em] uppercase text-pink-300/70 mt-3">
-            Para la estrella de mi vida
-          </p>
+          {dedicationFooter.trim() && (
+            <p className="title-font text-[10px] tracking-[0.24em] uppercase text-pink-300/70 mt-3">
+              {dedicationFooter}
+            </p>
+          )}
         </div>
 
         {/* Barra inferior de navegación Anterior / Siguiente */}

@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { GALAXY_CONFIG, TULIP_MEMORIES, type TulipMemory } from '../data/tulips';
+import {
+  GALAXY_CONFIG,
+  type FlowerType,
+  type TulipMemory,
+} from '../data/tulips';
 import { buildGalaxyLayers } from '../three/galaxyBuilder';
 import { createParticleGlowTexture } from '../three/textures';
 import { createTulipClusters, type TulipUserData } from '../three/tulipBuilder';
@@ -15,6 +19,9 @@ import {
 } from '../three/effects';
 
 interface GalaxyCanvasProps {
+  flowerType: FlowerType;
+  flowerCount: number;
+  memories: TulipMemory[];
   isAutoRotating: boolean;
   activeMemoryIndex: number | null;
   discoveredIds: number[];
@@ -51,6 +58,9 @@ function detectSoftwareWebGL(): boolean {
 }
 
 export function GalaxyCanvas({
+  flowerType,
+  flowerCount,
+  memories,
   isAutoRotating,
   activeMemoryIndex,
   discoveredIds,
@@ -61,6 +71,15 @@ export function GalaxyCanvas({
 }: GalaxyCanvasProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const [webglUnavailable, setWebglUnavailable] = useState(false);
+
+  const flowerTypeRef = useRef(flowerType);
+  flowerTypeRef.current = flowerType;
+
+  const flowerCountRef = useRef(flowerCount);
+  flowerCountRef.current = flowerCount;
+
+  const memoriesRef = useRef(memories);
+  memoriesRef.current = memories;
 
   const isAutoRotatingRef = useRef(isAutoRotating);
   isAutoRotatingRef.current = isAutoRotating;
@@ -86,9 +105,23 @@ export function GalaxyCanvas({
     syncMemoryFocus: (index: number | null) => void;
   } | null>(null);
 
+  const flowerBridgeRef = useRef<{
+    rebuildFlowers: () => void;
+  } | null>(null);
+
+  const isFirstFlowerSyncRef = useRef(true);
+
   useEffect(() => {
     focusBridgeRef.current?.syncMemoryFocus(activeMemoryIndex);
   }, [activeMemoryIndex]);
+
+  useEffect(() => {
+    if (isFirstFlowerSyncRef.current) {
+      isFirstFlowerSyncRef.current = false;
+      return;
+    }
+    flowerBridgeRef.current?.rebuildFlowers();
+  }, [flowerType, flowerCount, memories]);
 
   useEffect(() => {
     const container = mountRef.current;
@@ -147,7 +180,11 @@ export function GalaxyCanvas({
 
     const particleTexture = createParticleGlowTexture(renderer);
     const galaxyLayers = buildGalaxyLayers(scene, particleTexture);
-    const { tulips, disposeSharedTulips } = createTulipClusters(scene, particleTexture);
+    let { tulips, disposeSharedTulips } = createTulipClusters(scene, particleTexture, {
+      flowerType: flowerTypeRef.current,
+      flowerCount: flowerCountRef.current,
+      memories: memoriesRef.current,
+    });
 
     const burstParticles: BurstParticle[] = [];
     const shootingStars: ShootingStar[] = [];
@@ -248,10 +285,13 @@ export function GalaxyCanvas({
           return;
         }
 
+        const currentMemories = memoriesRef.current;
+        if (currentMemories.length === 0) return;
+
         const targetMemory =
-          TULIP_MEMORIES[
-            ((index % TULIP_MEMORIES.length) + TULIP_MEMORIES.length) %
-              TULIP_MEMORIES.length
+          currentMemories[
+            ((index % currentMemories.length) + currentMemories.length) %
+              currentMemories.length
           ];
         if (!targetMemory) return;
 
@@ -279,6 +319,23 @@ export function GalaxyCanvas({
         if (nearestTulip) {
           startFlightToTulip(nearestTulip);
         }
+      },
+    };
+
+    flowerBridgeRef.current = {
+      rebuildFlowers: () => {
+        clearPendingModal();
+        focusedTulip = null;
+        hoveredTulip = null;
+        isReturningFromFocus = false;
+        disposeSharedTulips();
+        const rebuilt = createTulipClusters(scene, particleTexture, {
+          flowerType: flowerTypeRef.current,
+          flowerCount: flowerCountRef.current,
+          memories: memoriesRef.current,
+        });
+        tulips = rebuilt.tulips;
+        disposeSharedTulips = rebuilt.disposeSharedTulips;
       },
     };
 
@@ -577,11 +634,9 @@ export function GalaxyCanvas({
         // Petal bloom response on hover & selection
         const targetBloom = isFocused ? 1.0 : isHovered ? 0.72 : 0.0;
         data.bloomFactor = THREE.MathUtils.damp(data.bloomFactor, targetBloom, 7, delta);
-        for (let p = 0; p < data.outerPetals.length; p++) {
-          data.outerPetals[p].rotation.x = 0.18 + data.bloomFactor * 0.22;
-        }
-        for (let p = 0; p < data.innerPetals.length; p++) {
-          data.innerPetals[p].rotation.x = 0.05 + data.bloomFactor * 0.13;
+        for (let p = 0; p < data.petalBindings.length; p++) {
+          const binding = data.petalBindings[p];
+          binding.mesh.rotation.x = binding.baseTiltX + data.bloomFactor * binding.bloomDeltaX;
         }
 
         // Aura distinction: unexplored tulips pulse warm gold, explored tulips glow softly rose, hovered/focused bloom bright pearl-pink
@@ -727,6 +782,7 @@ export function GalaxyCanvas({
     return () => {
       isDisposed = true;
       focusBridgeRef.current = null;
+      flowerBridgeRef.current = null;
       clearPendingModal();
       cancelAnimationFrame(frameId);
       window.clearTimeout(frameId);

@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 
 interface BottomDockProps {
+  flowerPlural: string;
+  flowerSingular: string;
   isAutoRotating: boolean;
   isAudioPlaying: boolean;
   discoveredCount: number;
@@ -19,6 +21,8 @@ interface BottomDockProps {
 }
 
 export function BottomDock({
+  flowerPlural,
+  flowerSingular,
   isAutoRotating,
   isAudioPlaying,
   discoveredCount,
@@ -95,7 +99,7 @@ export function BottomDock({
               className="min-h-[40px] px-4 md:px-5 py-2 rounded-full text-xs font-bold text-white bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 hover:brightness-110 active:scale-[0.98] transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_8px_22px_rgba(244,63,94,0.35)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-300"
             >
               <Flower2 className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-              <span>Tulipanes</span>
+              <span>{flowerPlural}</span>
               <span className="text-pink-100/95 font-semibold tabular-nums">
                 {discoveredCount}/{totalMemories}
               </span>
@@ -104,7 +108,14 @@ export function BottomDock({
 
           <div className="hidden sm:inline-flex items-center gap-1.5 text-[11px] text-pink-200/65 pointer-events-none select-none">
             <MousePointerClick className="w-3 h-3 text-pink-400/75 shrink-0" aria-hidden="true" />
-            <span>Toca un tulipán 3D · Arrastra para girar · Rueda o pellizco para zoom</span>
+            <span>
+              Toca{' '}
+              {flowerSingular.toLowerCase() === 'flor' ||
+              flowerSingular.toLowerCase() === 'rosa'
+                ? 'una'
+                : 'un'}{' '}
+              {flowerSingular.toLowerCase()} 3D · Arrastra para girar · Rueda o pellizco para zoom
+            </span>
           </div>
         </>
       )}

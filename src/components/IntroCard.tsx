@@ -3,10 +3,20 @@ import { Flower2, Heart } from 'lucide-react';
 interface IntroCardProps {
   visible: boolean;
   dismissed: boolean;
+  subtitle: string;
+  title: string;
+  message: string;
   onEnter: () => void;
 }
 
-export function IntroCard({ visible, dismissed, onEnter }: IntroCardProps) {
+export function IntroCard({
+  visible,
+  dismissed,
+  subtitle,
+  title,
+  message,
+  onEnter,
+}: IntroCardProps) {
   if (dismissed) return null;
 
   return (
@@ -33,11 +43,11 @@ export function IntroCard({ visible, dismissed, onEnter }: IntroCardProps) {
         </div>
 
         <p className="title-font text-[11px] tracking-[0.26em] uppercase text-pink-300/75 mb-1.5">
-          Universo Floral
+          {subtitle}
         </p>
 
         <h1 className="title-font text-2xl md:text-3xl font-bold glowing-pink text-pink-50 tracking-wide">
-          Galaxia de Tulipanes
+          {title}
         </h1>
 
         <div className="flex items-center justify-center gap-3 my-4" aria-hidden="true">
@@ -47,8 +57,7 @@ export function IntroCard({ visible, dismissed, onEnter }: IntroCardProps) {
         </div>
 
         <p className="script-font text-2xl md:text-[26px] text-pink-100/95 mb-6 leading-relaxed">
-          &ldquo;Haz clic o toca cualquier tulipán flotante del universo 3D para descubrir
-          su mensaje.&rdquo;
+          &ldquo;{message}&rdquo;
         </p>
 
         <div className="flex justify-center">
