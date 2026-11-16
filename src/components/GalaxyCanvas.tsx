@@ -158,12 +158,15 @@ export function GalaxyCanvas({
 
     let cameraRadius: number = GALAXY_CONFIG.introStartRadius;
     let targetCameraRadius: number = GALAXY_CONFIG.introTargetRadius;
+    let orbitBaseRadius: number = GALAXY_CONFIG.introTargetRadius;
     let isIntroZooming = true;
 
     let targetRotationX = 0.3;
     let targetRotationY = 0;
     let currentRotationX = 0.3;
     let currentRotationY = 0;
+    let orbitTime = 0;
+    let orbitSpeedFactor = 1;
 
     let focusedTulip: THREE.Group | null = null;
     let hoveredTulip: THREE.Group | null = null;
@@ -298,9 +301,6 @@ export function GalaxyCanvas({
       pointerDownPos = { x: event.clientX, y: event.clientY };
       previousPointerPos = { x: event.clientX, y: event.clientY };
       domElem.style.cursor = 'grabbing';
-      if (isAutoRotatingRef.current) {
-        onManualControlRef.current();
-      }
     };
 
     const handleMouseMove = (event: MouseEvent) => {
@@ -317,6 +317,9 @@ export function GalaxyCanvas({
           pointerDownMoved = true;
           clearPendingModal();
           releaseFocus();
+          if (isAutoRotatingRef.current) {
+            onManualControlRef.current();
+          }
         }
 
         targetRotationY -= deltaX * 0.005;
@@ -362,9 +365,6 @@ export function GalaxyCanvas({
           x: event.touches[0].clientX,
           y: event.touches[0].clientY,
         };
-        if (isAutoRotatingRef.current) {
-          onManualControlRef.current();
-        }
       } else if (event.touches.length === 2) {
         isDragging = false;
         initialPinchDistance = Math.hypot(
@@ -387,6 +387,9 @@ export function GalaxyCanvas({
           pointerDownMoved = true;
           clearPendingModal();
           releaseFocus();
+          if (isAutoRotatingRef.current) {
+            onManualControlRef.current();
+          }
         }
 
         targetRotationY -= (touch.clientX - previousPointerPos.x) * 0.005;
@@ -408,6 +411,7 @@ export function GalaxyCanvas({
             targetCameraRadius * (1 + (initialPinchDistance / currentDist - 1) * 0.2),
           ),
         );
+        orbitBaseRadius = targetCameraRadius;
         initialPinchDistance = currentDist;
         event.preventDefault();
       }
@@ -433,6 +437,7 @@ export function GalaxyCanvas({
         GALAXY_CONFIG.minZoomRadius,
         Math.min(GALAXY_CONFIG.maxZoomRadius, targetCameraRadius + event.deltaY * 0.3),
       );
+      orbitBaseRadius = targetCameraRadius;
     };
 
     const handleCanvasClick = (event: MouseEvent) => {
@@ -613,15 +618,41 @@ export function GalaxyCanvas({
 
       updateEffects(scene, burstParticles, shootingStars, deltaScale);
 
-      if (!isIntroZooming && isAutoRotatingRef.current && !focusedTulip) {
-        targetRotationY = elapsedTime * 0.04;
-        targetRotationX = Math.sin(elapsedTime * 0.2) * 0.15 + 0.3;
+      const isOrbitCruising = !isIntroZooming && isAutoRotatingRef.current && !focusedTulip;
+      const desiredOrbitSpeed = isOrbitCruising ? (hoveredTulip ? 0.2 : 1.0) : 0;
+      orbitSpeedFactor = THREE.MathUtils.damp(orbitSpeedFactor, desiredOrbitSpeed, 4.0, delta);
+
+      if (isOrbitCruising) {
+        orbitTime += delta * orbitSpeedFactor;
+
+        // Counter-drift relative to the galaxy spin (+0.04) for rich 3D parallax, advancing smoothly from the current angle
+        targetRotationY -= 0.085 * orbitSpeedFactor * delta;
+
+        // Gentle glide between low tulip-horizon skim and elevated spiral overview without snapping
+        const desiredOrbitX = 0.34 + Math.sin(orbitTime * 0.24) * 0.2;
+        targetRotationX = THREE.MathUtils.damp(targetRotationX, desiredOrbitX, 1.4, delta);
+
+        // Soft dolly breathing around the user's preferred zoom distance
+        const desiredOrbitRadius = Math.max(
+          GALAXY_CONFIG.minZoomRadius,
+          Math.min(
+            GALAXY_CONFIG.maxZoomRadius,
+            orbitBaseRadius + Math.cos(orbitTime * 0.19) * 24,
+          ),
+        );
+        targetCameraRadius = THREE.MathUtils.damp(
+          targetCameraRadius,
+          desiredOrbitRadius,
+          1.6,
+          delta,
+        );
       }
 
-      currentRotationY = THREE.MathUtils.damp(currentRotationY, targetRotationY, 5, delta);
-      currentRotationX = THREE.MathUtils.damp(currentRotationX, targetRotationX, 5, delta);
+      const angularDamp = isAutoRotatingRef.current ? 3.2 : 5.5;
+      currentRotationY = THREE.MathUtils.damp(currentRotationY, targetRotationY, angularDamp, delta);
+      currentRotationX = THREE.MathUtils.damp(currentRotationX, targetRotationX, angularDamp, delta);
       if (!isIntroZooming) {
-        cameraRadius = THREE.MathUtils.damp(cameraRadius, targetCameraRadius, 5, delta);
+        cameraRadius = THREE.MathUtils.damp(cameraRadius, targetCameraRadius, 4.5, delta);
       }
 
       if (focusedTulip) {
@@ -640,7 +671,16 @@ export function GalaxyCanvas({
         currentLookAt.y = THREE.MathUtils.damp(currentLookAt.y, _desiredLookAt.y, 5.0, delta);
         currentLookAt.z = THREE.MathUtils.damp(currentLookAt.z, _desiredLookAt.z, 5.0, delta);
       } else {
-        _desiredLookAt.set(0, 0, 0);
+        if (isOrbitCruising) {
+          _desiredLookAt.set(
+            Math.sin(orbitTime * 0.28) * 10,
+            Math.sin(orbitTime * 0.18) * 4.5,
+            Math.cos(orbitTime * 0.22) * 10,
+          );
+        } else {
+          _desiredLookAt.set(0, 0, 0);
+        }
+
         _desiredCamPos.set(
           Math.sin(currentRotationY) * Math.cos(currentRotationX) * cameraRadius,
           Math.sin(currentRotationX) * cameraRadius + 50,
@@ -652,16 +692,18 @@ export function GalaxyCanvas({
           currentCamPos.y = THREE.MathUtils.damp(currentCamPos.y, _desiredCamPos.y, 3.6, delta);
           currentCamPos.z = THREE.MathUtils.damp(currentCamPos.z, _desiredCamPos.z, 3.6, delta);
 
-          currentLookAt.x = THREE.MathUtils.damp(currentLookAt.x, 0, 4.2, delta);
-          currentLookAt.y = THREE.MathUtils.damp(currentLookAt.y, 0, 4.2, delta);
-          currentLookAt.z = THREE.MathUtils.damp(currentLookAt.z, 0, 4.2, delta);
+          currentLookAt.x = THREE.MathUtils.damp(currentLookAt.x, _desiredLookAt.x, 4.2, delta);
+          currentLookAt.y = THREE.MathUtils.damp(currentLookAt.y, _desiredLookAt.y, 4.2, delta);
+          currentLookAt.z = THREE.MathUtils.damp(currentLookAt.z, _desiredLookAt.z, 4.2, delta);
 
           if (currentCamPos.distanceToSquared(_desiredCamPos) < 0.8) {
             isReturningFromFocus = false;
           }
         } else {
           currentCamPos.copy(_desiredCamPos);
-          currentLookAt.copy(_desiredLookAt);
+          currentLookAt.x = THREE.MathUtils.damp(currentLookAt.x, _desiredLookAt.x, 3.2, delta);
+          currentLookAt.y = THREE.MathUtils.damp(currentLookAt.y, _desiredLookAt.y, 3.2, delta);
+          currentLookAt.z = THREE.MathUtils.damp(currentLookAt.z, _desiredLookAt.z, 3.2, delta);
         }
       }
 
