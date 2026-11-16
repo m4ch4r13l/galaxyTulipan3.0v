@@ -65,6 +65,12 @@ export default function App() {
     }, 500);
   }, []);
 
+  const handleTulipClick = useCallback((memory: TulipMemory) => {
+    const idx = TULIP_MEMORIES.findIndex((item) => item.id === memory.id);
+    const resolved = idx >= 0 ? idx : 0;
+    audioPlayerRef.current?.playMemoryCue(resolved);
+  }, []);
+
   const handleSelectTulip = useCallback(
     (memory: TulipMemory) => {
       const idx = TULIP_MEMORIES.findIndex((item) => item.id === memory.id);
@@ -72,7 +78,6 @@ export default function App() {
       setLastViewedIndex(resolved);
       setSelectedMemoryIndex(resolved);
       markDiscovered(TULIP_MEMORIES[resolved].id);
-      audioPlayerRef.current?.playMemoryCue(resolved);
     },
     [markDiscovered],
   );
@@ -113,6 +118,7 @@ export default function App() {
         discoveredIds={discoveredIds}
         onManualControl={handleManualControl}
         onIntroComplete={handleIntroComplete}
+        onTulipClick={handleTulipClick}
         onSelectTulip={handleSelectTulip}
       />
 

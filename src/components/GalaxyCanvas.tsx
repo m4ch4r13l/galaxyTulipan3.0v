@@ -20,6 +20,7 @@ interface GalaxyCanvasProps {
   discoveredIds: number[];
   onManualControl: () => void;
   onIntroComplete: () => void;
+  onTulipClick: (memory: TulipMemory) => void;
   onSelectTulip: (memory: TulipMemory) => void;
 }
 
@@ -55,6 +56,7 @@ export function GalaxyCanvas({
   discoveredIds,
   onManualControl,
   onIntroComplete,
+  onTulipClick,
   onSelectTulip,
 }: GalaxyCanvasProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
@@ -73,6 +75,9 @@ export function GalaxyCanvas({
 
   const onIntroCompleteRef = useRef(onIntroComplete);
   onIntroCompleteRef.current = onIntroComplete;
+
+  const onTulipClickRef = useRef(onTulipClick);
+  onTulipClickRef.current = onTulipClick;
 
   const onSelectTulipRef = useRef(onSelectTulip);
   onSelectTulipRef.current = onSelectTulip;
@@ -443,6 +448,7 @@ export function GalaxyCanvas({
           const data = obj.userData as TulipUserData;
           const memory = data.memory;
           clearPendingModal();
+          onTulipClickRef.current(memory);
           startFlightToTulip(obj);
           triggerTulipSupernova(
             scene,
